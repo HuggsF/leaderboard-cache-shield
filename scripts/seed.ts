@@ -85,32 +85,34 @@ export const seed = async (): Promise<void> => {
     const countSchema = z.array(z.object({ currentStudents: z.coerce.number() }));
     const parsedCount = countSchema.safeParse(countResult);
     const currentStudents = parsedCount.success ? (parsedCount.data[0]?.currentStudents ?? 0) : 0;
+    let studentIds: string[] = [];
+
     if (currentStudents >= STUDENTS_COUNT) {
       logger.info({ currentStudents }, 'Students already seeded. Skipping student insertion.');
-      return;
-    }
+      const existing = await db<StudentRecord>('students').select('id');
+      studentIds = existing.map((s) => s.id);
+    } else {
+      logger.info({ target: STUDENTS_COUNT }, 'Seeding students in batches...');
 
-    logger.info({ target: STUDENTS_COUNT }, 'Seeding students in batches...');
-    const studentIds: string[] = [];
+      for (let i = 0; i < STUDENTS_COUNT; i += BATCH_SIZE) {
+        const batchSize = Math.min(BATCH_SIZE, STUDENTS_COUNT - i);
+        const studentBatch: StudentRecord[] = [];
 
-    for (let i = 0; i < STUDENTS_COUNT; i += BATCH_SIZE) {
-      const batchSize = Math.min(BATCH_SIZE, STUDENTS_COUNT - i);
-      const studentBatch: StudentRecord[] = [];
+        for (let j = 0; j < batchSize; j += 1) {
+          const id = uuidv4();
+          studentIds.push(id);
+          studentBatch.push({
+            id,
+            name: faker.person.fullName().slice(0, 100),
+            created_at: faker.date.past(),
+          });
+        }
 
-      for (let j = 0; j < batchSize; j += 1) {
-        const id = uuidv4();
-        studentIds.push(id);
-        studentBatch.push({
-          id,
-          name: faker.person.fullName().slice(0, 100),
-          created_at: faker.date.past(),
-        });
-      }
+        await db.batchInsert('students', studentBatch, batchSize);
 
-      await db.batchInsert('students', studentBatch, batchSize);
-
-      if ((i + batchSize) % 20_000 === 0 || i + batchSize === STUDENTS_COUNT) {
-        logger.info({ progress: i + batchSize, total: STUDENTS_COUNT }, 'Students inserted');
+        if ((i + batchSize) % 20_000 === 0 || i + batchSize === STUDENTS_COUNT) {
+          logger.info({ progress: i + batchSize, total: STUDENTS_COUNT }, 'Students inserted');
+        }
       }
     }
 
@@ -125,7 +127,7 @@ export const seed = async (): Promise<void> => {
         const courseId =
           courseIds[Math.floor(Math.random() * courseIds.length)] ?? courseIds[0] ?? uuidv4();
         const completed = Math.random() > 0.15; // 85% completed
-        const score = completed ? faker.number.int({ min: 100, max: 10_000 }) : 0;
+        const score = completed ? faker.number.int({ min: 50, max: 800 }) : 0;
 
         enrollmentBatch.push({
           id: uuidv4(),
