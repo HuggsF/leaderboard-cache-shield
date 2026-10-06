@@ -42,9 +42,9 @@ const parseMetrics = async (
     if (!res.ok) return { dbQueries: 0, cacheHits: 0 };
     const text = await res.text();
 
-    const dbQueryMatch = new RegExp(
-      `db_queries_total{strategy="${strategyLabel}"}\\s+(\\d+)`,
-    ).exec(text);
+    const dbQueryMatch = new RegExp(`db_queries_total{strategy="${strategyLabel}"}\\s+(\\d+)`).exec(
+      text,
+    );
     const cacheHitMatch = new RegExp(
       `cache_hits_total{strategy="${strategyLabel}"}\\s+(\\d+)`,
     ).exec(text);

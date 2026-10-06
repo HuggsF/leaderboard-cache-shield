@@ -1,0 +1,159 @@
+{
+  "measuredAt": "2026-10-06T17:09:12.629Z",
+  "target": "http://app:3000",
+  "results": [
+    {
+      "strategy": "v1",
+      "test": "Burst — 1,000 simultaneous requests at expiry",
+      "requests": 1000,
+      "ok": 20,
+      "failed": 980,
+      "p50Ms": 11520,
+      "p99Ms": 12072,
+      "maxMs": 16591,
+      "requestsPerSecond": 59,
+      "server": {
+        "dbQueries": 1000,
+        "dbQueryErrors": 980,
+        "staleServed": 0,
+        "lockWaits": 0
+      }
+    },
+    {
+      "strategy": "v2",
+      "test": "Burst — 1,000 simultaneous requests at expiry",
+      "requests": 1000,
+      "ok": 1000,
+      "failed": 0,
+      "p50Ms": 4543,
+      "p99Ms": 4739,
+      "maxMs": 4748,
+      "requestsPerSecond": 200,
+      "server": {
+        "dbQueries": 1,
+        "dbQueryErrors": 0,
+        "staleServed": 0,
+        "lockWaits": 999
+      }
+    },
+    {
+      "strategy": "v3",
+      "test": "Burst — 1,000 simultaneous requests at expiry",
+      "requests": 1000,
+      "ok": 1000,
+      "failed": 0,
+      "p50Ms": 453,
+      "p99Ms": 468,
+      "maxMs": 472,
+      "requestsPerSecond": 1000,
+      "server": {
+        "dbQueries": 1,
+        "dbQueryErrors": 0,
+        "staleServed": 1000,
+        "lockWaits": 0
+      }
+    },
+    {
+      "strategy": "v1",
+      "test": "Burst — 10,000 simultaneous requests at expiry",
+      "requests": 10000,
+      "ok": 20,
+      "failed": 9980,
+      "p50Ms": 15670,
+      "p99Ms": 17709,
+      "maxMs": 18595,
+      "requestsPerSecond": 556,
+      "server": {
+        "dbQueries": 10000,
+        "dbQueryErrors": 9980,
+        "staleServed": 0,
+        "lockWaits": 0
+      }
+    },
+    {
+      "strategy": "v2",
+      "test": "Burst — 10,000 simultaneous requests at expiry",
+      "requests": 10000,
+      "ok": 3605,
+      "failed": 6395,
+      "p50Ms": 7364,
+      "p99Ms": 8812,
+      "maxMs": 8859,
+      "requestsPerSecond": 1111,
+      "server": {
+        "dbQueries": 1,
+        "dbQueryErrors": 0,
+        "staleServed": 0,
+        "lockWaits": 8393
+      }
+    },
+    {
+      "strategy": "v3",
+      "test": "Burst — 10,000 simultaneous requests at expiry",
+      "requests": 10000,
+      "ok": 10000,
+      "failed": 0,
+      "p50Ms": 2086,
+      "p99Ms": 3350,
+      "maxMs": 3383,
+      "requestsPerSecond": 2500,
+      "server": {
+        "dbQueries": 1,
+        "dbQueryErrors": 0,
+        "staleServed": 9730,
+        "lockWaits": 0
+      }
+    },
+    {
+      "strategy": "v1",
+      "test": "Window — 50 connections × 15 s of constant traffic from the expiry on",
+      "requests": 19012,
+      "ok": 18982,
+      "failed": 30,
+      "p50Ms": 10,
+      "p99Ms": 73,
+      "maxMs": 13236,
+      "requestsPerSecond": 1268,
+      "server": {
+        "dbQueries": 50,
+        "dbQueryErrors": 30,
+        "staleServed": 0,
+        "lockWaits": 0
+      }
+    },
+    {
+      "strategy": "v2",
+      "test": "Window — 50 connections × 15 s of constant traffic from the expiry on",
+      "requests": 70206,
+      "ok": 70206,
+      "failed": 0,
+      "p50Ms": 7,
+      "p99Ms": 23,
+      "maxMs": 2915,
+      "requestsPerSecond": 4681,
+      "server": {
+        "dbQueries": 1,
+        "dbQueryErrors": 0,
+        "staleServed": 0,
+        "lockWaits": 49
+      }
+    },
+    {
+      "strategy": "v3",
+      "test": "Window — 50 connections × 15 s of constant traffic from the expiry on",
+      "requests": 64296,
+      "ok": 64296,
+      "failed": 0,
+      "p50Ms": 10,
+      "p99Ms": 28,
+      "maxMs": 65,
+      "requestsPerSecond": 4287,
+      "server": {
+        "dbQueries": 1,
+        "dbQueryErrors": 0,
+        "staleServed": 11698,
+        "lockWaits": 0
+      }
+    }
+  ]
+}

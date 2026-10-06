@@ -20,9 +20,9 @@ Under SWR:
    - **Fresh TTL** (`CACHE_FRESH_TTL_SECONDS = 300s`): Managed via an auxiliary staleness marker key (`{entry}:stale`).
    - **Stale TTL** (`CACHE_STALE_TTL_SECONDS = 600s`): The total retention time of the payload in Redis (`{entry}:data`).
 2. An atomic `MGET` queries both keys in a single network round-trip.
-3. If the data exists and the stale marker is present, the data is **Fresh** and returned immediately ($< 5\text{ms}$).
+3. If the data exists and the stale marker is present, the data is **Fresh** and returned immediately (one Redis round-trip).
 4. If the data exists but the marker has expired, the data is **Stale**:
-   - The stale data is **returned immediately** to the client ($< 5\text{ms}$, zero perceived latency for the end user).
+   - The stale data is **returned immediately** to the client — nobody waits for MySQL (measured worst request: 65 ms under 50 concurrent connections across an expiry, vs 2.9 s with the distributed lock; see `load-tests/results.md`).
    - An asynchronous background revalidation task is triggered.
    - The background revalidation is guarded by an in-process **Single-Flight** promise deduplicator and a **Distributed Lock** across cluster nodes, ensuring that **only ONE** background query hits MySQL.
 5. Once the background worker refreshes MySQL data and updates Redis, both the payload and the freshness marker are reset atomically via a Redis `MULTI` transaction.
