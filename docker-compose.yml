@@ -1,0 +1,102 @@
+services:
+  mysql:
+    image: mysql:8
+    # The whole data set (~500k enrollments + indexes) fits in the buffer pool, like a tuned
+    # production server: the query cost comes from the aggregation, not from disk reads.
+    command: ["--innodb-buffer-pool-size=512M"]
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: leaderboard
+    ports:
+      - "${MYSQL_HOST_PORT:-3306}:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      # TCP ping: the temporary server MySQL runs during first-boot initialisation only listens
+      # on the socket, so this check stays red until the real server accepts connections.
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "-proot"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 20s
+
+  redis:
+    image: redis:7-alpine
+    # Pure cache: no RDB snapshots, no AOF.
+    command: ["redis-server", "--save", "", "--appendonly", "no"]
+    ports:
+      - "${REDIS_HOST_PORT:-6379}:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  app:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    ports:
+      - "${APP_HOST_PORT:-3000}:3000"
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    sysctls:
+      # Accept queue for the connection burst of a stampede
+      net.core.somaxconn: 4096
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - LOG_LEVEL=info
+      - DB_HOST=mysql
+      - DB_PORT=3306
+      - DB_USER=root
+      - DB_PASSWORD=root
+      - DB_NAME=leaderboard
+      - DB_MIGRATE_ON_START=true
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - LEADERBOARD_QUERY_DELAY_MS=${LEADERBOARD_QUERY_DELAY_MS:-500}
+      - DB_POOL_MAX=${DB_POOL_MAX:-10}
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:3000/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+      start_period: 10s
+
+  # Seed + load tests from inside the Compose network (no host networking in the measurement):
+  #   docker compose --profile tools run --rm tools npm run seed
+  #   docker compose --profile tools run --rm tools npm run loadtest
+  tools:
+    profiles: ["tools"]
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.dev
+    volumes:
+      - .:/app
+      - /app/node_modules
+      - npm_cache:/root/.npm
+    depends_on:
+      app:
+        condition: service_healthy
+    sysctls:
+      # 10,000 client sockets per run: widen the ephemeral port range, reuse TIME_WAIT ports
+      net.ipv4.ip_local_port_range: "1024 65000"
+      net.ipv4.tcp_tw_reuse: 1
+    environment:
+      - DB_HOST=mysql
+      - DB_PORT=3306
+      - DB_USER=root
+      - DB_PASSWORD=root
+      - DB_NAME=leaderboard
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - TARGET_URL=http://app:3000
+    command: ["npm", "run", "loadtest"]
+
+volumes:
+  mysql_data:
+  npm_cache:

@@ -1,0 +1,13 @@
+# Tooling image (dev dependencies included): seed script and load tests inside the Compose
+# network, or the API with hot reload. Source is bind-mounted by docker-compose.
+FROM node:24-alpine
+
+WORKDIR /app
+
+COPY package.json package-lock.json ./
+RUN npm ci --no-audit --no-fund
+
+COPY . .
+
+EXPOSE 3000
+CMD ["npm", "run", "dev"]
